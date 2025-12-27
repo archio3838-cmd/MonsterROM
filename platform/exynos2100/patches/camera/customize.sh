@@ -1,3 +1,9 @@
+LOG_STEP_IN "- Clean up old directories from the ROM"
+DELETE_FROM_WORK_DIR "system" "system/cameradata"
+DELETE_FROM_WORK_DIR "system" "system/saiv"
+DELETE_FROM_WORK_DIR "system" "system/usr"
+LOG_STEP_OUT
+
 LOG_STEP_IN "- Replacing camera blobs"
 BLOBS_LIST="
 system/lib64/libae_bracket_hdr.arcsoft.so

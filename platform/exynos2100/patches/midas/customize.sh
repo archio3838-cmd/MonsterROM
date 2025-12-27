@@ -7,7 +7,3 @@ DELETE_FROM_WORK_DIR "system" "system/priv-app/PhotoRemasterService/oat"
 ADD_TO_WORK_DIR "p3sxxx" "system" "system/priv-app/PhotoRemasterService/PhotoRemasterService.apk"
 LOG_STEP_OUT
 
-LOG_STEP_IN "- Adding S21 (p3sxxx) MIDAS libraries"
-ADD_TO_WORK_DIR "p3sxxx" "system" "system/lib64/libmidas_core.camera.samsung.so"
-ADD_TO_WORK_DIR "p3sxxx" "system" "system/lib64/libmidas_DNNInterface.camera.samsung.so"
-LOG_STEP_OUT
