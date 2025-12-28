@@ -1,1 +1,0 @@
-switch.codes = 0x02:0x17

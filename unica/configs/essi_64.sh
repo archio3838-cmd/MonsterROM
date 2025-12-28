@@ -17,7 +17,7 @@
 
 # ExtremeROM configuration file for Exynos devices (essi/essi_64)
 
-# Galaxy S25 FE (One UI 8)
+# Galaxy S25 FE (One UI 8.5)
 SOURCE_CODENAME="r13s"
 SOURCE_FIRMWARE="SM-S731B/EUX/351060965011694"
 SOURCE_EXTRA_FIRMWARES=()

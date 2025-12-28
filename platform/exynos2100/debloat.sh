@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Salvo Giangreco
+# Copyright (C) 2025 Salvo Giangreco
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,14 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Debloat list for the Exynos 2100 platform
+# Debloat list for Samsung Exynos 2100 devices (exynos2100)
 # - Add entries inside the specific partition containing that file (<PARTITION>_DEBLOAT+="")
 # - DO NOT add the partition name at the start of any entry (eg. "/system/dpolicy_system")
 # - DO NOT add a slash at the start of any entry (eg. "/dpolicy_system")
 
-# Wi-Fi Hotspot Overlays
+# Overlays
+SYSTEM_DEBLOAT+="
+system/app/WifiRROverlayAppLls
+"
 PRODUCT_DEBLOAT+="
-overlay/SoftapOverlay6GHz
-overlay/SoftapOverlayDualAp
-overlay/SoftapOverlayOWE
+overlay/SoftapOverlayQC
 "
