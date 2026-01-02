@@ -35,7 +35,7 @@ $DEBUG && ! $ROM_IS_OFFICIAL && ZIP_FILE_SUFFIX=".zip"
 FILE_NAME="MonsterROM_${ROM_STATUS}_${ROM_VERSION}_$(date +%Y%m%d)_${TARGET_CODENAME}${ZIP_FILE_SUFFIX}"
 while [ -f "$OUT_DIR/$FILE_NAME" ]; do
     INCREMENTAL=$((INCREMENTAL + 1))
-    FILE_NAME="MonsterROM_${ROM_VERSION}_$(date +%Y%m%d)-${INCREMENTAL}_${TARGET_CODENAME}${ZIP_FILE_SUFFIX}"
+    FILE_NAME="shineui_ui8.5_s25fe"
 done
 
 PRIVATE_KEY_PATH="$SRC_DIR/security/"
@@ -691,13 +691,13 @@ if [ -f "$WORK_DIR/up_param.bin" ]; then
 fi
 
 LOG "- Generating updater-script"
-GENERATE_UPDATER_SCRIPT
+#GENERATE_UPDATER_SCRIPT
 
 LOG "- Generating build_info.txt"
-GENERATE_BUILD_INFO
+#GENERATE_BUILD_INFO
 
 LOG "- Generating OTA metadata"
-GENERATE_OTA_METADATA
+#GENERATE_OTA_METADATA
 
 LOG "- Creating zip"
 EVAL "rm -f \"$OUT_DIR/rom.zip\"" || exit 1
