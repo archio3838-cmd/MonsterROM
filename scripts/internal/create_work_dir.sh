@@ -116,7 +116,7 @@ COPY_SOURCE_FIRMWARE()
 
 COPY_TARGET_FIRMWARE()
 {
-    local TARGET_FOLDERS="odm_dlkm system_dlkm vendor vendor_dlkm"
+    local TARGET_FOLDERS="vendor"
     for f in $TARGET_FOLDERS; do
         if [ -d "$FW_DIR/$TARGET_FIRMWARE_PATH/$f" ]; then
             LOG "- Copying /$f from target firmware"
