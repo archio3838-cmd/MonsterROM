@@ -16,94 +16,184 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# shellcheck disable=SC2162
+
 set -Eeuo pipefail
 
 # [
-GENERATE_LPMAKE_OPT()
+GET_PROP()
 {
-    local OPT
+    local PROP="$1"
+    local FILE="$2"
+
+    if [ ! -f "$FILE" ]; then
+        echo "File not found: $FILE"
+        exit 1
+    fi
+
+    grep "^$PROP=" "$FILE" | cut -d "=" -f2-
+}
+
+PRINT_HEADER()
+{
+    local ONEUI_VERSION
+    local MAJOR
+    local MINOR
+    local PATCH
+
+    ONEUI_VERSION="$(GET_PROP "ro.build.version.oneui" "$WORK_DIR/system/system/build.prop")"
+    MAJOR=$(echo "scale=0; $ONEUI_VERSION / 10000" | bc -l)
+    MINOR=$(echo "scale=0; $ONEUI_VERSION % 10000 / 100" | bc -l)
+    PATCH=$(echo "scale=0; $ONEUI_VERSION % 100" | bc -l)
+    if [[ "$PATCH" != "0" ]]; then
+        ONEUI_VERSION="$MAJOR.$MINOR.$PATCH"
+    else
+        ONEUI_VERSION="$MAJOR.$MINOR"
+    fi
+
+    echo    'ui_print(" ");'
+    echo    'ui_print("****************************************");'
+    echo -n 'ui_print("'
+    echo -n "UN1CA-A70 Core Version $ROM_VERSION"
+    echo    '");'
+    echo    'ui_print("Coded by salvo_giangri @XDAforums");'
+    echo    'ui_print("****************************************");'
+    echo -n 'ui_print("'
+    echo -n "One UI version: $ONEUI_VERSION"
+    echo    '");'
+    echo -n 'ui_print("'
+    echo -n "Source: $(GET_PROP "ro.system.build.fingerprint" "$WORK_DIR/system/system/build.prop")"
+    echo    '");'
+    echo    'ui_print("****************************************");'
+}
+
+GET_SPARSE_IMG_SIZE()
+{
+    local FILE_INFO
+    local BLOCKS
+    local BLOCK_SIZE
+
+    FILE_INFO=$(file -b "$1")
+    if [ -z "$FILE_INFO" ] || [[ "$FILE_INFO" != "Android"* ]]; then
+        exit 1
+    fi
+
+    BLOCKS=$(echo "$FILE_INFO" | grep -o "[[:digit:]]*" | sed "3p;d")
+    BLOCK_SIZE=$(echo "$FILE_INFO" | grep -o "[[:digit:]]*" | sed "4p;d")
+
+    echo "$BLOCKS * $BLOCK_SIZE" | bc -l
+}
+
+GENERATE_UPDATER_SCRIPT()
+{
+    local SCRIPT_FILE="$TMP_DIR/META-INF/com/google/android/updater-script"
+    local PARTITION_COUNT=0
+    local HAS_BOOT=false
     local HAS_SYSTEM=false
     local HAS_VENDOR=false
     local HAS_PRODUCT=false
-    local HAS_SYSTEM_EXT=false
-    local HAS_ODM=false
-    local HAS_VENDOR_DLKM=false
-    local HAS_ODM_DLKM=false
-    local HAS_SYSTEM_DLKM=false
+    local HAS_POST_INSTALL=false
 
-    [ -f "$TMP_DIR/system.img" ] && HAS_SYSTEM=true
-    [ -f "$TMP_DIR/vendor.img" ] && HAS_VENDOR=true
-    [ -f "$TMP_DIR/product.img" ] && HAS_PRODUCT=true
-    [ -f "$TMP_DIR/system_ext.img" ] && HAS_SYSTEM_EXT=true
-    [ -f "$TMP_DIR/odm.img" ] && HAS_ODM=true
-    [ -f "$TMP_DIR/vendor_dlkm.img" ] && HAS_VENDOR_DLKM=true
-    [ -f "$TMP_DIR/odm_dlkm.img" ] && HAS_ODM_DLKM=true
-    [ -f "$TMP_DIR/system_dlkm.img" ] && HAS_SYSTEM_DLKM=true
+    [ -f "$TMP_DIR/boot.img" ] && HAS_BOOT=true
+    [ -f "$TMP_DIR/dtbo.img" ] && HAS_DTBO=true
+    [ -f "$TMP_DIR/system.new.dat.br" ] && HAS_SYSTEM=true
+    [ -f "$TMP_DIR/vendor.new.dat.br" ] && HAS_VENDOR=true && PARTITION_COUNT=$((PARTITION_COUNT + 1))
+    [ -f "$TMP_DIR/product.new.dat.br" ] && HAS_PRODUCT=true && PARTITION_COUNT=$((PARTITION_COUNT + 1))
+    [ -f "$SRC_DIR/target/$TARGET_CODENAME/postinstall.edify" ] && HAS_POST_INSTALL=true
 
-    OPT+="--sparse"
-    OPT+=" -o $TMP_DIR/super.img"
-    OPT+=" --device-size $TARGET_SUPER_PARTITION_SIZE"
-    OPT+=" --metadata-size 65536 --metadata-slots 2"
-    OPT+=" -g $TARGET_SUPER_GROUP_NAME:$TARGET_SUPER_GROUP_SIZE"
+    [ -f "$SCRIPT_FILE" ] && rm -f "$SCRIPT_FILE"
+    touch "$SCRIPT_FILE"
+    {
+            echo -n 'getprop("ro.build.product") == "'
+            echo -n "a70q"
+            echo -n '" || '
+            echo -n 'abort("E3004: This package is for \"'
+            echo -n "a70q"
+            echo    '\" devices; this is a \"" + getprop("ro.product.device") + "\".");'
+        else
+            echo -n 'getprop("ro.product.device") == "'
+            echo -n "a70q"
+            echo -n '" || abort("E3004: This package is for \"'
+            echo -n "a70q"
+            echo    '\" devices; this is a \"" + getprop("ro.product.device") + "\".");'
+        fi
 
-    if $HAS_SYSTEM; then
-        OPT+=" -p system:readonly:$(wc -c "$TMP_DIR/system.img" | cut -d " " -f 1):$TARGET_SUPER_GROUP_NAME"
-    fi
-    if $HAS_VENDOR; then
-        OPT+=" -p vendor:readonly:$(wc -c "$TMP_DIR/vendor.img" | cut -d " " -f 1):$TARGET_SUPER_GROUP_NAME"
-    fi
-    if $HAS_PRODUCT; then
-        OPT+=" -p product:readonly:$(wc -c "$TMP_DIR/product.img" | cut -d " " -f 1):$TARGET_SUPER_GROUP_NAME"
-    fi
-    if $HAS_SYSTEM_EXT; then
-        OPT+=" -p system_ext:readonly:$(wc -c "$TMP_DIR/system_ext.img" | cut -d " " -f 1):$TARGET_SUPER_GROUP_NAME"
-    fi
-    if $HAS_ODM; then
-        OPT+=" -p odm:readonly:$(wc -c "$TMP_DIR/odm.img" | cut -d " " -f 1):$TARGET_SUPER_GROUP_NAME"
-    fi
-    if $HAS_VENDOR_DLKM; then
-        OPT+=" -p vendor_dlkm:readonly:$(wc -c "$TMP_DIR/vendor_dlkm.img" | cut -d " " -f 1):$TARGET_SUPER_GROUP_NAME"
-    fi
-    if $HAS_ODM_DLKM; then
-        OPT+=" -p odm_dlkm:readonly:$(wc -c "$TMP_DIR/odm_dlkm.img" | cut -d " " -f 1):$TARGET_SUPER_GROUP_NAME"
-    fi
-    if $HAS_SYSTEM_DLKM; then
-        OPT+=" -p system_dlkm:readonly:$(wc -c "$TMP_DIR/system_dlkm.img" | cut -d " " -f 1):$TARGET_SUPER_GROUP_NAME"
-    fi
+        PRINT_HEADER
 
-    if $HAS_SYSTEM; then
-        OPT+=" -i system=$TMP_DIR/system.img"
-    fi
-    if $HAS_VENDOR; then
-        OPT+=" -i vendor=$TMP_DIR/vendor.img"
-    fi
-    if $HAS_PRODUCT; then
-        OPT+=" -i product=$TMP_DIR/product.img"
-    fi
-    if $HAS_SYSTEM_EXT; then
-        OPT+=" -i system_ext=$TMP_DIR/system_ext.img"
-    fi
-    if $HAS_ODM; then
-        OPT+=" -i odm=$TMP_DIR/odm.img"
-    fi
-    if $HAS_VENDOR_DLKM; then
-        OPT+=" -i vendor_dlkm=$TMP_DIR/vendor_dlkm.img"
-    fi
-    if $HAS_ODM_DLKM; then
-        OPT+=" -i odm_dlkm=$TMP_DIR/odm_dlkm.img"
-    fi
-    if $HAS_SYSTEM_DLKM; then
-        OPT+=" -i system_dlkm=$TMP_DIR/system_dlkm.img"
-    fi
+        if $HAS_SYSTEM; then
+            echo -e "\n# Patch partition system\n"
+            echo    'ui_print("Patching system image unconditionally...");'
+            echo -n 'show_progress(0.'
+            echo "9 - $PARTITION_COUNT" | bc -l | tr -d "\n"
+            echo    '00000, 0);'
+            echo    'block_image_update("/dev/block/platform/soc/1d84000.ufshc/by-name/system", package_extract_file("system.transfer.list"), "system.new.dat.br", "system.patch.dat") ||'
+            echo    '  abort("E1001: Failed to update system image.");'
+        fi
+        if $HAS_VENDOR; then
+            echo -e "\n# Patch partition vendor\n"
+            echo    'ui_print("Patching vendor image unconditionally...");'
+            echo    'show_progress(0.100000, 0);'
+            echo    'block_image_update("/dev/block/platform/soc/1d84000.ufshc/by-name/vendor", package_extract_file("vendor.transfer.list"), "vendor.new.dat.br", "vendor.patch.dat") ||'
+            echo    '  abort("E2001: Failed to update vendor image.");'
+        fi
+        if $HAS_PRODUCT; then
+            echo -e "\n# Patch partition product\n"
+            echo    'ui_print("Patching product image unconditionally...");'
+            echo    'show_progress(0.100000, 0);'
+            echo    'block_image_update("/dev/block/platform/soc/1d84000.ufshc/by-name/product", package_extract_file("product.transfer.list"), "vendor.new.dat.br", "product.patch.dat") ||'
+            echo    '  abort("E2001: Failed to update product image.");'
+        fi
+        if $HAS_DTBO; then
+            echo    'ui_print("Full Patching dtbo.img img...");'
+            echo -n 'package_extract_file("dtbo.img", "'
+            echo -n "$TARGET_BOOT_DEVICE_PATH"
+            echo    '/dev/block/bootdevice/by-name/dtbo");'
+        fi
+        if $HAS_BOOT; then
+            echo    'ui_print("Installing boot image...");'
+            echo -n 'package_extract_file("boot.img", "'
+            echo -n "$TARGET_BOOT_DEVICE_PATH"
+            echo    '/dev/block/bootdevice/by-name/boot");'
+        fi
 
-    echo "$OPT"
+        if $HAS_POST_INSTALL; then
+            cat "$SRC_DIR/target/$TARGET_CODENAME/postinstall.edify"
+        fi
+
+        echo    'set_progress(1.000000);'
+        echo    'ui_print("****************************************");'
+        echo    'ui_print(" ");'
+    } >> "$SCRIPT_FILE"
+
+    true
 }
 
-FILE_NAME="MonsterROM_${ROM_VERSION}_$(date +%Y%m%d)_${TARGET_CODENAME}"
+GENERATE_BUILD_INFO()
+{
+    local BUILD_INFO_FILE="$TMP_DIR/build_info.txt"
+
+    [ -f "$BUILD_INFO_FILE" ] && rm -f "$BUILD_INFO_FILE"
+    touch "$BUILD_INFO_FILE"
+    {
+        echo "device=$TARGET_CODENAME"
+        echo "version=$ROM_VERSION"
+        echo "timestamp=$ROM_BUILD_TIMESTAMP"
+        echo "security_patch_version=$(GET_PROP "ro.build.version.security_patch" "$WORK_DIR/system/system/build.prop")"
+    } >> "$BUILD_INFO_FILE"
+
+    true
+}
+
+FILE_NAME="shineui8.5_s25fe"
+CERT_NAME="aosp_testkey"
+$ROM_IS_OFFICIAL && [ -f "$SRC_DIR/security/unica_ota.pk8" ] && CERT_NAME="unica_ota"
 # ]
 
 echo "Set up tmp dir"
 mkdir -p "$TMP_DIR"
+[ -d "$TMP_DIR/META-INF/com/google/android" ] && rm -rf "$TMP_DIR/META-INF/com/google/android"
+mkdir -p "$TMP_DIR/META-INF/com/google/android"
+cp --preserve=all "$SRC_DIR/prebuilts/bootable/deprecated-ota/updater" "$TMP_DIR/META-INF/com/google/android/update-binary"
 
 while read -r i; do
     PARTITION=$(basename "$i")
@@ -113,19 +203,22 @@ while read -r i; do
     [ -f "$WORK_DIR/$PARTITION.img" ] && rm -f "$WORK_DIR/$PARTITION.img"
 
     echo "Building $PARTITION.img"
-    bash "$SRC_DIR/scripts/build_fs_image.sh" "$TARGET_OS_FILE_SYSTEM" "$WORK_DIR/$PARTITION" \
+    bash "$SRC_DIR/scripts/build_fs_image.sh" "$TARGET_OS_FILE_SYSTEM+sparse" "$WORK_DIR/$PARTITION" \
         "$WORK_DIR/configs/file_context-$PARTITION" "$WORK_DIR/configs/fs_config-$PARTITION" > /dev/null 2>&1
     mv "$WORK_DIR/$PARTITION.img" "$TMP_DIR/$PARTITION.img"
 done <<< "$(find "$WORK_DIR" -mindepth 1 -maxdepth 1 -type d)"
 
-echo "Building super.img"
-[ -f "$TMP_DIR/super.img" ] && rm -f "$TMP_DIR/super.img"
-CMD="lpmake $(GENERATE_LPMAKE_OPT)"
-$CMD &> /dev/null
-for i in "$TMP_DIR"/*; do
-    [[ "$i" == *"super.img" ]] && continue
-    rm -f "$i"
-done
+while read -r i; do
+    PARTITION="$(basename "$i" | sed "s/.img//g")"
+
+    if [ -f "$TMP_DIR/$PARTITION.new.dat" ] || [ -f "$TMP_DIR/$PARTITION.new.dat.br" ]; then
+        rm -f "$TMP_DIR/$PARTITION.new.dat" \
+            && rm -f "$TMP_DIR/$PARTITION.new.dat.br" \
+            && rm -f "$TMP_DIR/$PARTITION.patch.dat" \
+            && rm -f "$TMP_DIR/$PARTITION.transfer.list"
+    fi
+
+    
 
 while read -r i; do
     IMG="$(basename "$i")"
@@ -134,22 +227,22 @@ while read -r i; do
     cp -a --preserve=all "$i" "$TMP_DIR/$IMG"
 done <<< "$(find "$WORK_DIR/kernel" -mindepth 1 -maxdepth 1 -type f -name "*.img")"
 
-for i in "$TMP_DIR"/*.img; do
-    echo "Compressing $(basename "$i")"
-    [ -f "$i.lz4" ] && rm -f "$i.lz4"
-    lz4 -B6 --content-size -q --rm "$i" "$i.lz4" &> /dev/null
-done
+echo "Generating updater-script"
+#GENERATE_UPDATER_SCRIPT
 
-echo "Creating tar"
-[ -f "$OUT_DIR/$FILE_NAME.tar" ] && rm -f "$OUT_DIR/$FILE_NAME.tar"
-cd "$TMP_DIR" ; tar -c --format=gnu -f "$OUT_DIR/$FILE_NAME.tar" -- *.lz4 ; cd - &> /dev/null
+echo "Generate build_info.txt"
+#GENERATE_BUILD_INFO
 
-echo "Generating checksum"
-[ -f "$OUT_DIR/$FILE_NAME.tar.md5" ] && rm -f "$OUT_DIR/$FILE_NAME.tar.md5"
-CHECKSUM="$(md5sum "$OUT_DIR/$FILE_NAME.tar" | cut -d " " -f 1 | sed 's/ //')"
-echo -n "$CHECKSUM" >> "$OUT_DIR/$FILE_NAME.tar" \
-    && echo "  $FILE_NAME.tar" >> "$OUT_DIR/$FILE_NAME.tar" \
-    && mv "$OUT_DIR/$FILE_NAME.tar" "$OUT_DIR/$FILE_NAME.tar.md5"
+echo "Creating zip"
+[ -f "$OUT_DIR/rom.zip" ] && rm -f "$OUT_DIR/rom.zip"
+cd "$TMP_DIR" ; zip -rq ../rom.zip ./* ; cd - &> /dev/null
+
+echo "Signing zip"
+[ -f "$OUT_DIR/$FILE_NAME-sign.zip" ] && rm -f "$OUT_DIR/$FILE_NAME-sign.zip"
+signapk -w \
+    "$SRC_DIR/security/$CERT_NAME.x509.pem" "$SRC_DIR/security/$CERT_NAME.pk8" \
+    "$OUT_DIR/rom.zip" "$OUT_DIR/$FILE_NAME-sign.zip" \
+    && rm -f "$OUT_DIR/rom.zip"
 
 echo "Deleting tmp dir"
 rm -rf "$TMP_DIR"
