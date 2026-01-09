@@ -115,7 +115,6 @@ GENERATE_UPDATER_SCRIPT()
             echo -n '" || abort("E3004: This package is for \"'
             echo -n "a70q"
             echo    '\" devices; this is a \"" + getprop("ro.product.device") + "\".");'
-        fi
 
         PRINT_HEADER
 
