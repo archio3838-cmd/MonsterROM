@@ -10,7 +10,7 @@
 <p align="center">MonsterROM Nexus is a work-in-progress custom firmware for Samsung Galaxy devices.</p>
 
 <p align="center">
-  <a href="https://t.me/extremerom">💬 Telegram</a>
+  <a href="https://t.me/monsterrom">💬 Telegram</a>
   <a href="https://github.com/ExtremeXT/MonsterROM/wiki">📖 Wiki</a>
   <a href="https://github.com/ExtremeXT/MonsterROM/blob/fifteen/CHANGELOG.md">📝 Changelog</a>
   <a href="https://github.com/ExtremeXT/MonsterROM/blob/fifteen/MAINTAINERS">🧑‍💻 Maintainers</a>

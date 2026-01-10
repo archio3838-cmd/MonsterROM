@@ -88,7 +88,7 @@ BUILD()
 
     if [[ "$INPUT_FILE" == *".apk" ]]; then
         local CERT_PREFIX="aosp"
-        $ROM_IS_OFFICIAL && CERT_PREFIX="extremerom"
+        $ROM_IS_OFFICIAL && CERT_PREFIX="monsterrom"
 
         LOG "- Signing ${INPUT_FILE//$WORK_DIR/}"
         EVAL "signapk \"$SRC_DIR/security/${CERT_PREFIX}_platform.x509.pem\" \"$SRC_DIR/security/${CERT_PREFIX}_platform.pk8\" \"$OUTPUT_PATH/dist/$FILE_NAME\" \"$OUTPUT_PATH/dist/temp.apk\"" || exit 1

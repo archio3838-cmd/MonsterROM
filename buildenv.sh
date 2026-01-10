@@ -103,7 +103,7 @@ run_cmd()
 }
 
 alias unica=run_cmd
-alias extremerom=run_cmd
+alias monsterrom=run_cmd
 alias erom=run_cmd
 alias m="./scripts/make_rom.sh"
 
