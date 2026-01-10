@@ -19,11 +19,11 @@
 # [
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
-FORCE=false
-FS_TYPE=""
-SPARSE=false
+FORCE=true
+FS_TYPE="erofs"
+SPARSE=true
 INPUT_DIR=""
-PARTITION=""
+PARTITION="system"
 IMAGE_SIZE=""
 INODES=""
 MOUNT_POINT=""
