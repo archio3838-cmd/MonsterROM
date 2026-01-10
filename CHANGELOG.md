@@ -1,10 +1,10 @@
-# ExtremeROM Nexus changelog
+# MonsterROM Nexus changelog
 
 # 2.6.1
 - Updated build system (thx @Ksawlii)
 - Added ASCII art in the installer (thx @bkurt)
-- Switched to ExtremeROM Certificate for modified APKs and main installer ZIP (thx @salvogiangri)
-- Added ExtremeROM Branding in Settings
+- Switched to MonsterROM Certificate for modified APKs and main installer ZIP (thx @salvogiangri)
+- Added MonsterROM Branding in Settings
 - Brought back 4-digit OK PIN Patch (thx @Ocin4ever)
 - Fixed 16MP UW on S10 Series (thx @Mesazane)
 - Fixed Heart Rate Monitor sensor on S10 Series

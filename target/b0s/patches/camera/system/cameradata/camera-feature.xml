@@ -292,6 +292,6 @@
     <local name="SUPPORT_CAMERA_ASSISTANT_AUTO_LENS_SWITCHING" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_ZOOM_X100" value="true"/>
 
-    <!-- ExtremeROM -->
+    <!-- MonsterROM -->
     <local name="SUPPORT_DEFAULT_HEVC" value="true"/>
 </resources>

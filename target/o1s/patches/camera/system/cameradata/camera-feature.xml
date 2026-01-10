@@ -264,7 +264,7 @@
     <local name="SUPPORT_CAMERA_ASSISTANT_AUDIO_MONITORING" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_AUTO_LENS_SWITCHING" value="true"/>
 
-    <!-- ExtremeROM -->
+    <!-- MonsterROM -->
     <local name="SUPPORT_DEFAULT_HEVC" value="true"/>
     <local name="SUPPORT_LOG_VIDEO" value="true"/>
 </resources>

@@ -259,7 +259,7 @@
     <local name="SUPPORT_CAMERA_ASSISTANT_FAST_SHUTTER" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_SOFTEN_PICTURE" value="true"/>
 
-    <!-- ExtremeROM -->
+    <!-- MonsterROM -->
     <local name="SUPPORT_DEFAULT_HEVC" value="true"/>
     <local name="SUPPORT_LOG_VIDEO" value="true"/>
 </resources>

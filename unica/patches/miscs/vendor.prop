@@ -8,3 +8,6 @@ ro.config.alarm_alert=Morning_Xylophone.ogg
 ro.config.media_sound=Media_preview_Over_the_horizon.ogg
 ro.config.ringtone_2=Atomic_Bell.ogg
 ro.config.notification_sound_2=Three_Star.ogg
+
+# Fix DPI
+ro.sf.init.lcd_density=450
