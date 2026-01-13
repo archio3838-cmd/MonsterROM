@@ -529,10 +529,10 @@ done < <(find "$WORK_DIR" -maxdepth 1 -type d)
 LOG_STEP_OUT
 
 LOG "- Building unsparse_super_empty.img"
-BUILD_SUPER_EMPTY
+#BUILD_SUPER_EMPTY
 
 LOG "- Generating dynamic_partitions_op_list"
-GENERATE_OP_LIST
+#GENERATE_OP_LIST
 
 while IFS= read -r f; do
     PARTITION="$(basename "$f" | sed "s/.img//g")"
@@ -556,10 +556,10 @@ if [ -d "$WORK_DIR/kernel" ]; then
 
         LOG_STEP_IN "- Copying $IMG"
 
-        cp -a "$WORK_DIR/kernel/$IMG" "$TMP_DIR/$IMG"
+        #cp -a "$WORK_DIR/kernel/$IMG" "$TMP_DIR/$IMG"
 
         if ! $TARGET_DISABLE_AVB_SIGNING; then
-            SIGN_IMAGE_WITH_AVB "$TMP_DIR/$IMG"
+            SIGN_IMAGE_WITH_AVB "$WORK_DIR/kernel/$IMG"
         fi
 
         LOG_STEP_OUT
@@ -567,26 +567,15 @@ if [ -d "$WORK_DIR/kernel" ]; then
 fi
 
 LOG "- Generating updater-script"
-GENERATE_UPDATER_SCRIPT
+#GENERATE_UPDATER_SCRIPT
 
 LOG "- Generating build_info.txt"
-GENERATE_BUILD_INFO
+#GENERATE_BUILD_INFO
 
 LOG "- Generating OTA metadata"
-GENERATE_OTA_METADATA
+#GENERATE_OTA_METADATA
 
-if [ -d "$SRC_DIR/target/$TARGET_CODENAME/installer/root" ]; then
-    LOG "- Copying target custom install files"
-    EVAL "cp -a \"$SRC_DIR/target/$TARGET_CODENAME/installer/root/\"* \"$TMP_DIR\"" || exit 1
-fi
 
-if [ -f "$SRC_DIR/target/$TARGET_CODENAME/installer/customize.sh" ]; then
-    LOG_STEP_IN "- Running target custom install script"
-    (
-    . "$SRC_DIR/target/$TARGET_CODENAME/installer/customize.sh"
-    ) || exit 1
-    LOG_STEP_OUT
-fi
 
 LOG "- Creating zip"
 EVAL "rm -f \"$TMP_DIR/rom.zip\"" || exit 1
