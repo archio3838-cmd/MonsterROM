@@ -14,13 +14,13 @@ jobs:
         run: |
           git clone https://github.com/salvogiangri/UN1CA.git tmp
           
-          cp -R tmp/scripts .
+          cp -R tmp/prebuilts/samsung/dm1qxxx/system_ext/apex/ 
           rm -rf tmp
 
       - name: force push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add scripts
-          git commit -m "sync scripts" || exit 0
+          git add .
+          git commit -m "sync" || exit 0
           git push --force
