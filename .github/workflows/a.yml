@@ -14,7 +14,7 @@ jobs:
         run: |
           git clone https://github.com/salvogiangri/UN1CA.git tmp
           
-          cp -R tmp/prebuilts/samsung/dm1qxxx/system_ext/apex/ 
+          cp -R tmp/prebuilts/samsung/dm1qxxx/system_ext/apex/com.android.vndk.v33.apex
           rm -rf tmp
 
       - name: force push
