@@ -522,7 +522,7 @@ while IFS= read -r f; do
     PARTITION=$(basename "$f")
     IS_VALID_PARTITION_NAME "$PARTITION" || continue
 
-    "$SRC_DIR/scripts/build_fs_image.sh" "$TARGET_OS_FILE_SYSTEM_TYPE" \
+    "$SRC_DIR/scripts/build_fs_image.sh" "erofs" \
         -o "$TMP_DIR/$PARTITION.img" -m -S \
         "$WORK_DIR/$PARTITION" "$WORK_DIR/configs/file_context-$PARTITION" "$WORK_DIR/configs/fs_config-$PARTITION" || exit 1
 done < <(find "$WORK_DIR" -maxdepth 1 -type d)
