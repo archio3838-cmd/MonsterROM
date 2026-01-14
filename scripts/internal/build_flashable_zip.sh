@@ -523,7 +523,7 @@ while IFS= read -r f; do
     IS_VALID_PARTITION_NAME "$PARTITION" || continue
 
     "$SRC_DIR/scripts/build_fs_image.sh" "erofs" \
-        -o "$TMP_DIR/$PARTITION.img" -m -S \
+        -o "$TMP_DIR/$PARTITION.img" -S \
         "$WORK_DIR/$PARTITION" "$WORK_DIR/configs/file_context-$PARTITION" "$WORK_DIR/configs/fs_config-$PARTITION" || exit 1
 done < <(find "$WORK_DIR" -maxdepth 1 -type d)
 LOG_STEP_OUT
