@@ -31,15 +31,6 @@ COPY_SOURCE_FIRMWARE()
             EVAL "rsync -a --mkpath --delete --exclude=\"*system_ext*\" \"$FW_DIR/$SOURCE_FIRMWARE_PATH/$f\" \"$WORK_DIR\"" || exit 1
             sed "/system_ext/d" "$FW_DIR/$SOURCE_FIRMWARE_PATH/file_context-$f" > "$WORK_DIR/configs/file_context-$f"
             sed "/system_ext/d" "$FW_DIR/$SOURCE_FIRMWARE_PATH/fs_config-$f" > "$WORK_DIR/configs/fs_config-$f"
-            if [[ "$f" == "product" ]]; then
-                LOG_STEP_IN
-                SET_PROP "product" "ro.product.product.name" "$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/product/etc/build.prop" "ro.product.product.name")"
-                LOG_STEP_OUT
-            elif [[ "$f" == "system" ]]; then
-                LOG_STEP_IN
-                SET_PROP "system" "ro.product.device" "$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/odm/etc/build.prop" "ro.product.odm.device")"
-                LOG_STEP_OUT
-            fi
         else
             [ -d "$WORK_DIR/$f" ] && rm -rf "$WORK_DIR/$f"
             [ -f "$WORK_DIR/configs/file_context-$f" ] && rm -f "$WORK_DIR/configs/file_context-$f"
@@ -48,7 +39,7 @@ COPY_SOURCE_FIRMWARE()
     done
 
     if [ -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/system_ext" ]; then
-        if $TARGET_OS_BUILD_SYSTEM_EXT_PARTITION; then
+        if $TARGET_HAS_SYSTEM_EXT; then
             LOG_STEP_IN "- Copying /system_ext from source firmware"
 
             [ -L "$WORK_DIR/system/system_ext" ] && rm -f "$WORK_DIR/system/system_ext"
@@ -78,13 +69,14 @@ COPY_SOURCE_FIRMWARE()
             sed "s/^\/system_ext/\/system\/system_ext/g" "$FW_DIR/$SOURCE_FIRMWARE_PATH/file_context-system_ext" >> "$WORK_DIR/configs/file_context-system"
             sed "s/^system_ext/system\/system_ext/g" "$FW_DIR/$SOURCE_FIRMWARE_PATH/fs_config-system_ext" >> "$WORK_DIR/configs/fs_config-system"
 
-            ADD_TO_WORK_DIR "b0sxxx" "system_ext" "etc/build_flags.json" 0 0 644 "u:object_r:system_file:s0" || exit 1
             DELETE_FROM_WORK_DIR "system" "system/system_ext/etc/NOTICE.xml.gz"
+            DELETE_FROM_WORK_DIR "system" "system/system_ext/etc/fs_config_dirs"
+            DELETE_FROM_WORK_DIR "system" "system/system_ext/etc/fs_config_files"
 
             LOG_STEP_OUT
         fi
     elif [ -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/system_ext" ]; then
-        if $TARGET_OS_BUILD_SYSTEM_EXT_PARTITION; then
+        if $TARGET_HAS_SYSTEM_EXT; then
             LOG_STEP_IN "- Copying /system_ext from source firmware"
 
             [ -L "$WORK_DIR/system/system_ext" ] && rm -f "$WORK_DIR/system/system_ext"
@@ -97,10 +89,10 @@ COPY_SOURCE_FIRMWARE()
             SET_METADATA "system" "system/system_ext" 0 0 644 "u:object_r:system_file:s0"
             grep -F "system/system_ext" "$FW_DIR/$SOURCE_FIRMWARE_PATH/file_context-system" | sed "s/^\/system//" > "$WORK_DIR/configs/file_context-system_ext"
             grep -F "system/system_ext" "$FW_DIR/$SOURCE_FIRMWARE_PATH/fs_config-system" | sed "s/^system\///" > "$WORK_DIR/configs/fs_config-system_ext"
-            sed -i "s/^system_ext /  /g" "$WORK_DIR/configs/fs_config-system_ext"
 
-            ADD_TO_WORK_DIR "b0qxxx" "system_ext" "etc/build_flags.json" 0 0 644 "u:object_r:system_file:s0" || exit 1
-            ADD_TO_WORK_DIR "b0qxxx" "system_ext" "etc/NOTICE.xml.gz" 0 0 644 "u:object_r:system_file:s0" || exit 1
+            ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system_ext" "etc/NOTICE.xml.gz"
+            ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system_ext" "etc/fs_config_dirs"
+            ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system_ext" "etc/fs_config_files"
 
             LOG_STEP_OUT
         else
@@ -124,23 +116,13 @@ COPY_SOURCE_FIRMWARE()
 
 COPY_TARGET_FIRMWARE()
 {
-    local TARGET_FOLDERS="odm odm_dlkm system_dlkm vendor vendor_dlkm"
+    local TARGET_FOLDERS="odm_dlkm system_dlkm vendor vendor_dlkm"
     for f in $TARGET_FOLDERS; do
         if [ -d "$FW_DIR/$TARGET_FIRMWARE_PATH/$f" ]; then
             LOG "- Copying /$f from target firmware"
             EVAL "rsync -a --mkpath --delete \"$FW_DIR/$TARGET_FIRMWARE_PATH/$f\" \"$WORK_DIR\"" || exit 1
             EVAL "cp -a \"$FW_DIR/$TARGET_FIRMWARE_PATH/file_context-$f\" \"$WORK_DIR/configs/file_context-$f\"" || exit 1
             EVAL "cp -a \"$FW_DIR/$TARGET_FIRMWARE_PATH/fs_config-$f\" \"$WORK_DIR/configs/fs_config-$f\"" || exit 1
-            if [[ "$f" == "vendor" ]]; then
-                LOG_STEP_IN
-                SET_PROP "vendor" "ro.config.ringtone" "$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/build.prop" "ro.config.ringtone")"
-                SET_PROP "vendor" "ro.config.notification_sound" "$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/build.prop" "ro.config.notification_sound")"
-                SET_PROP "vendor" "ro.config.alarm_alert" "$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/build.prop" "ro.config.alarm_alert")"
-                SET_PROP "vendor" "ro.config.media_sound" "$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/build.prop" "ro.config.media_sound")"
-                SET_PROP "vendor" "ro.config.ringtone_2" "$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/build.prop" "ro.config.ringtone_2")"
-                SET_PROP "vendor" "ro.config.notification_sound_2" "$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/build.prop" "ro.config.notification_sound_2")"
-                LOG_STEP_OUT
-            fi
         else
             [ -d "$WORK_DIR/$f" ] && rm -rf "$WORK_DIR/$f"
             [ -f "$WORK_DIR/configs/file_context-$f" ] && rm -f "$WORK_DIR/configs/file_context-$f"
@@ -173,7 +155,7 @@ COPY_TARGET_KERNEL()
 mkdir -p "$WORK_DIR"
 mkdir -p "$WORK_DIR/configs"
 COPY_SOURCE_FIRMWARE
-COPY_TARGET_FIRMWARE
-COPY_TARGET_KERNEL
+#COPY_TARGET_FIRMWARE
+#COPY_TARGET_KERNEL
 
 exit 0
