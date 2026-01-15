@@ -528,52 +528,6 @@ while IFS= read -r f; do
 done < <(find "$WORK_DIR" -maxdepth 1 -type d)
 LOG_STEP_OUT
 
-LOG "- Building unsparse_super_empty.img"
-#BUILD_SUPER_EMPTY
-
-LOG "- Generating dynamic_partitions_op_list"
-#GENERATE_OP_LIST
-
-while IFS= read -r f; do
-    PARTITION="$(basename "$f" | sed "s/.img//g")"
-    IS_VALID_PARTITION_NAME "$PARTITION" || continue
-
-    LOG "- Converting $PARTITION.img to $PARTITION.new.dat"
-    EVAL "img2sdat -o \"$TMP_DIR\" -B \"$TMP_DIR/$PARTITION.map\" \"$f\"" || exit 1
-    rm -f "$f" "$TMP_DIR/$PARTITION.map"
-
-    if ! $DEBUG; then
-        LOG "- Compressing $PARTITION.new.dat"
-        # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/common.py#3585
-        EVAL "brotli --quality=6 --output=\"$TMP_DIR/$PARTITION.new.dat.br\" \"$TMP_DIR/$PARTITION.new.dat\"" || exit 1
-        rm -f "$TMP_DIR/$PARTITION.new.dat"
-    fi
-done < <(find "$TMP_DIR" -maxdepth 1 -type f -name "*.img")
-
-if [ -d "$WORK_DIR/kernel" ]; then
-    while IFS= read -r f; do
-        IMG="$(basename "$f")"
-
-        LOG_STEP_IN "- Copying $IMG"
-
-        #cp -a "$WORK_DIR/kernel/$IMG" "$TMP_DIR/$IMG"
-
-        if ! $TARGET_DISABLE_AVB_SIGNING; then
-            SIGN_IMAGE_WITH_AVB "$WORK_DIR/kernel/$IMG"
-        fi
-
-        LOG_STEP_OUT
-    done < <(find "$WORK_DIR/kernel" -maxdepth 1 -type f -name "*.img")
-fi
-
-LOG "- Generating updater-script"
-#GENERATE_UPDATER_SCRIPT
-
-LOG "- Generating build_info.txt"
-#GENERATE_BUILD_INFO
-
-LOG "- Generating OTA metadata"
-#GENERATE_OTA_METADATA
 
 
 
