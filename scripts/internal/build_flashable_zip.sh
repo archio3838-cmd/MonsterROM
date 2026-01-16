@@ -103,7 +103,7 @@ GENERATE_BUILD_INFO()
         echo "device=$TARGET_CODENAME"
         echo "version=$ROM_VERSION"
         echo "timestamp=$ROM_BUILD_TIMESTAMP"
-        echo "security_patch_version=$(GET_PROP "system" "ro.build.version.security_patch")"
+        echo "security_patch_version=$(GET_PROP "system" "ro.system.build.id")"
         # TODO
         echo "incremental=0"
     } > "$BUILD_INFO_FILE"
